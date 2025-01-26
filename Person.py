@@ -1,10 +1,10 @@
 class Person:
-    def __init__(self, name:str, availability:List[str], isSoup: bool, shiftCount: int):
+    def __init__(self, name:str, availability: list[str], isSoup: bool, maxShift: int, minShift: int):
         self.name = name
         self.availability = availability
         self.isSoup = isSoup
 
-    def setShiftCount(self, amount:int)
+    def setShiftCount(self, amount:int):
         pass
     def setName(self, name:str):
         pass
