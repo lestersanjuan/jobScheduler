@@ -1,5 +1,5 @@
 from Person import Person
-
+import random
 class Schedule:
     def __init__(self):
         """
@@ -33,6 +33,51 @@ class Schedule:
                 "Saturday": self.saturdayCount,
                 "Sunday": self.sundayCount,
             }
+    def fillShiftsRandomized(self, employees: list[Person]):
+        """
+        Randomized algorithm to fill shifts for the week.
+        - Randomly selects employees to fill shifts while respecting:
+            - Employee availability
+            - Employee maxShift constraint
+        - Ensures shifts are filled up to the required number of employees.
+        """
+        for day, shifts in self.schedule.items():
+            day_required, night_required = self.shift_requirements[day]
+
+            # Shuffle the employee list to randomize order
+            random.shuffle(employees)
+
+            # Fill day_shift
+            for employee in employees:
+                if len(shifts["day_shift"]) < day_required:  # Check if we need more for the day shift
+                    if (
+                        employee.availability[day][0]  # Check if available for day_shift
+                        and employee.maxShift > 0     # Ensure they have shifts left
+                    ):
+                        shifts["day_shift"].append(employee)
+                        employee.maxShift -= 1
+
+            # Shuffle again for night shift to ensure fairness
+            random.shuffle(employees)
+
+            # Fill night_shift
+            for employee in employees:
+                if len(shifts["night_shift"]) < night_required:  # Check if we need more for the night shift
+                    if (
+                        employee.availability[day][1]  # Check if available for night_shift
+                        and employee.maxShift > 0     # Ensure they have shifts left
+                        and employee not in shifts["day_shift"]
+                    ):
+                        shifts["night_shift"].append(employee)
+                        employee.maxShift -= 1
+
+        
+        
+            # If not enough employees are assigned to the shifts, print a warning
+            if len(shifts["day_shift"]) < day_required:
+                print(f"WARNING: Not enough employees for {day} day shift.")
+            if len(shifts["night_shift"]) < night_required:
+                print(f"WARNING: Not enough employees for {day} night shift.")
 
     def fillShiftsGreedy(self, employees: list[Person]):
         """
@@ -42,12 +87,14 @@ class Schedule:
             - Employee maxShift constraint
         - Ensures shifts are filled up to the required number of employees.
         """
+
+        
         for day, shifts in self.schedule.items():
             day_required, night_required = self.shift_requirements[day]
 
             # Sort employees by maxShift (prioritize employees with higher maxShift)
             employees_sorted = sorted(employees, key=lambda e: e.maxShift, reverse=True)
-
+            
             # Fill day_shift
             for employee in employees_sorted:
                 if len(shifts["day_shift"]) < day_required:  # Check if we need more for the day shift
