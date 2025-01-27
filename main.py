@@ -62,7 +62,7 @@ if __name__ == "__main__":
         },
         isSoup=True,
         maxShift=3,
-        minShift=3,
+        minShift=1,
     ),
     Person(
         name="Dan",
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         },
         isSoup=True,
         maxShift=3,
-        minShift=2,
+        minShift=1,
     ),
     Person(
         name="Destiny",
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         },
         isSoup=False,
         maxShift=4,
-        minShift=3,
+        minShift=1,
     ),
     Person(
         name="Donny",
@@ -257,7 +257,7 @@ if __name__ == "__main__":
         },
         isSoup=False,
         maxShift=2,
-        minShift=2,
+        minShift=1,
     ),
     Person(
         name="Luan",
@@ -384,6 +384,6 @@ if __name__ == "__main__":
 
     # Create a schedule and populate it
     schedule = Schedule()
-    schedule.fillShiftsRandomized(employees)
+    schedule.fillShiftsBacktracking(employees)
     # Print the filled schedule
     print(schedule)
