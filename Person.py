@@ -9,6 +9,8 @@ class Person:
         self.name = name
         self.availability = availability
         self.isSoup = isSoup
+        self.maxShift = maxShift
+        self.minShift = minShift
 
     def setShiftCount(self, amount:int):
         pass
