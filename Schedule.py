@@ -266,12 +266,11 @@ class Schedule:
     
 
     def doesShiftHaveSoup(self, day): 
-        """Checks for if the shift has Soup"""
-        for shift in self.schedule[day]: #check for day_shift, and night_shift
-            for people in self.schedule[day][shift]: #check for each person in day/night shfit
-                if self.schedule[day][shift][people].getIsSoup():
+        """Checks if any employee scheduled on the given day has soup."""
+        for shift in self.schedule[day]:  # shift is either "day_shift" or "night_shift"
+            for emp in self.schedule[day][shift]:
+                if emp.getIsSoup():
                     return True
-
         return False
     def __repr__(self):
         """
