@@ -118,7 +118,6 @@ class Schedule:
         else:
             print("Could NOT fill all shifts with the given constraints.")
         return success
-
     def fillShiftsRandomized(self, employees: list[Person]):
         """
         Randomized algorithm to fill shifts for the week.
