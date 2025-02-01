@@ -332,7 +332,7 @@ if __name__ == "__main__":
         },
         isSoup=False,
         maxShift=4,
-        minShift=1,
+        minShift=2,
     ),
     Person(
         name="Tammy",
