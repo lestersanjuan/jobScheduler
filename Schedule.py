@@ -1,5 +1,8 @@
 from Person import Person
 import random
+global counter
+
+counter = 0
 class Schedule:
     def __init__(self):
         """
@@ -83,6 +86,9 @@ class Schedule:
 
         # --- Recursive Backtracking Function ---
         def backtrack(i: int) -> bool:
+            global counter
+            counter += 1
+            print("It is still running! -> This many iterations: ", counter)
             # Prune if the total remaining capacity is less than the slots left.
             if sum(employee_shifts_left.values()) < (len(all_slots) - i):
                 return False
