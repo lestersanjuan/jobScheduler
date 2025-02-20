@@ -125,21 +125,6 @@ if __name__ == "__main__":
         minShift=3,
     ),
     Person(
-        name="Ian",
-        availability={
-            "Monday": [False, False],
-            "Tuesday": [False, False],
-            "Wednesday": [False, True],
-            "Thursday": [False, False],
-            "Friday": [True, True],
-            "Saturday": [False, False],
-            "Sunday": [False, False],
-        },
-        isSoup=False,
-        maxShift=2,
-        minShift=1,
-    ),
-    Person(
         name="Imogene",
         availability={
             "Monday": [False, True],
