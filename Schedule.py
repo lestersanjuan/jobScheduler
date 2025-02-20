@@ -1,5 +1,8 @@
 from Person import Person
 import random
+global counter
+
+counter = 0
 class Schedule:
     def __init__(self):
         """
@@ -39,97 +42,88 @@ class Schedule:
         Returns True if successful, or False if it is impossible given constraints:
             - Employee availability
             - Employee maxShift
-            - Cannot assign same person to the same shift more than once
-            - (Optional) Cannot assign same person to day+night on the same day (if desired)
+            - Cannot assign the same person to the same shift more than once
+            - (Optional) Cannot assign the same person to both day and night on the same day
         """
+        # --- Upfront Feasibility Check ---
+        # Calculate total required slots for the week.
+        total_slots = sum(day_req + night_req for (day_req, night_req) in self.shift_requirements.values())
+        # Calculate the total capacity of all employees.
+        total_capacity = sum(emp.maxShift for emp in employees)
+        if total_capacity < total_slots:
+            print("Overall, there are not enough shifts available among all employees!")
+            return False
 
-        # 1) Create an ordered list of all "shift slots" we must fill.
-        #    For example, if Monday requires 2 day and 4 night => 6 slots for Monday.
-        days_in_order = [
-            "Monday", "Tuesday", "Wednesday", "Thursday", 
-            "Friday", "Saturday", "Sunday"
-        ]
+        # --- Create an Ordered List of Shift Slots ---
+        days_in_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         all_slots = []
-        for day_name in days_in_order:
-            day_req, night_req = self.shift_requirements[day_name]
-            for _ in range(day_req):
-                all_slots.append((day_name, "day_shift"))
-            for _ in range(night_req):
-                all_slots.append((day_name, "night_shift"))
+        for day in days_in_order:
+            day_req, night_req = self.shift_requirements[day]
+            all_slots.extend([(day, "day_shift")] * day_req)
+            all_slots.extend([(day, "night_shift")] * night_req)
 
-        # 2) Track how many shifts each employee can still work (their maxShift).
+        # --- Track the Remaining Shifts for Each Employee ---
         employee_shifts_left = {emp: emp.maxShift for emp in employees}
 
-        # 3) The recursive backtracking function.
+        # --- Inline can_assign Function ---
+        def can_assign(emp, day_name, shift_type) -> bool:
+            # 1) Check that the employee has capacity left.
+            if employee_shifts_left[emp] <= 0:
+                return False
+            # 2) Ensure the employee isn't already assigned to this shift.
+            if emp in self.schedule[day_name][shift_type]:
+                return False
+            # 3) Check employee availability for the given shift.
+            day_avail, night_avail = emp.availability[day_name]
+            if shift_type == "day_shift" and not day_avail:
+                return False
+            if shift_type == "night_shift" and not night_avail:
+                return False
+            # 4) (Optional) Prevent assigning the same employee to both shifts on the same day.
+            if shift_type == "night_shift" and emp in self.schedule[day_name]["day_shift"]:
+                return False
+            return True
+
+        # --- Recursive Backtracking Function ---
         def backtrack(i: int) -> bool:
-            # If we have assigned employees for all slots, we're done.
+            global counter
+            counter += 1
+            print("It is still running! -> This many iterations: ", counter)
+            # Prune if the total remaining capacity is less than the slots left.
+            if sum(employee_shifts_left.values()) < (len(all_slots) - i):
+                return False
+
+            # Base case: all slots have been filled.
             if i == len(all_slots):
                 return True
 
             day_name, shift_type = all_slots[i]
 
-            # Try each employee for slot i.
+            # Try assigning each employee to the current slot.
             for emp in employees:
-                if self.can_assign(emp, day_name, shift_type, employee_shifts_left):
-                    # Assign employee to this slot
+                if can_assign(emp, day_name, shift_type):
+                    # Assign the employee.
                     self.schedule[day_name][shift_type].append(emp)
                     employee_shifts_left[emp] -= 1
 
-                    # Move on to the next slot
+                    # Recurse to fill the next slot.
                     if backtrack(i + 1):
                         return True
 
-                    # Backtrack: undo the assignment if it didn't lead to a solution
+                    # Backtrack: undo the assignment.
                     self.schedule[day_name][shift_type].pop()
                     employee_shifts_left[emp] += 1
 
-            # No valid assignment for slot i => fail
+            # No valid assignment was found for this slot.
             return False
 
-        # 4) Start backtracking from the first slot
+        # --- Start the Backtracking Process ---
         success = backtrack(0)
         if success:
             print("Successfully filled all required shifts using backtracking!")
         else:
             print("Could NOT fill all shifts with the given constraints.")
         return success
-
-    def can_assign(
-        self, 
-        emp: Person, 
-        day_name: str, 
-        shift_type: str, 
-        shifts_left: dict
-    ) -> bool:
-        """
-        Checks whether 'emp' can be assigned to (day_name, shift_type) given:
-          - Enough shifts left (maxShift not exceeded).
-          - The person is not already in that shift on that day.
-          - Availability for day/night.
-          - (Optional) If you want to forbid day+night on same day for one person.
-        """
-        # 1) Check the employee still has capacity to work.
-        if shifts_left[emp] <= 0:
-            return False
-
-        # 2) Check that employee is not already assigned to this exact shift.
-        if emp in self.schedule[day_name][shift_type]:
-            return False
-
-        # 3) Check their availability for this day/shift.
-        day_avail, night_avail = emp.availability[day_name]
-        if shift_type == "day_shift" and not day_avail:
-            return False
-        if shift_type == "night_shift" and not night_avail:
-            return False
-
-        # 4) (Optional) Check if you do NOT allow day+night for the same day:
-        if shift_type == "night_shift":
-            if emp in self.schedule[day_name]["day_shift"]:
-                return False
-
-        return True
-
     def fillShiftsRandomized(self, employees: list[Person]):
         """
         Randomized algorithm to fill shifts for the week.
@@ -266,12 +260,11 @@ class Schedule:
     
 
     def doesShiftHaveSoup(self, day): 
-        """Checks for if the shift has Soup"""
-        for shift in self.schedule[day]: #check for day_shift, and night_shift
-            for people in self.schedule[day][shift]: #check for each person in day/night shfit
-                if self.schedule[day][shift][people].getIsSoup():
+        """Checks if any employee scheduled on the given day has soup."""
+        for shift in self.schedule[day]:  # shift is either "day_shift" or "night_shift"
+            for emp in self.schedule[day][shift]:
+                if emp.getIsSoup():
                     return True
-
         return False
     def __repr__(self):
         """
