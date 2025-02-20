@@ -110,36 +110,6 @@ if __name__ == "__main__":
         minShift=0,
     ),
     Person(
-        name="Elissa",
-        availability={
-            "Monday": [True, False],
-            "Tuesday": [True, False],
-            "Wednesday": [True, False],
-            "Thursday": [True, False],
-            "Friday": [True, False],
-            "Saturday": [False, False],
-            "Sunday": [False, False],
-        },
-        isSoup=True,
-        maxShift=4,
-        minShift=3,
-    ),
-    Person(
-        name="Ian",
-        availability={
-            "Monday": [False, False],
-            "Tuesday": [False, False],
-            "Wednesday": [False, True],
-            "Thursday": [False, False],
-            "Friday": [True, True],
-            "Saturday": [False, False],
-            "Sunday": [False, False],
-        },
-        isSoup=False,
-        maxShift=2,
-        minShift=1,
-    ),
-    Person(
         name="Imogene",
         availability={
             "Monday": [False, True],
@@ -256,7 +226,7 @@ if __name__ == "__main__":
             "Sunday": [True, True],
         },
         isSoup=False,
-        maxShift=2,
+        maxShift=3,
         minShift=1,
     ),
     Person(
