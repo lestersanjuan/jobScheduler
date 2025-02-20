@@ -1,6 +1,6 @@
 from Person import Person
 import random
-global counter
+
 
 counter = 0
 class Schedule:
@@ -38,23 +38,20 @@ class Schedule:
             }
     def fillShiftsBacktracking(self, employees: list[Person]) -> bool:
         """
-        Attempt to fill all day_shift and night_shift slots for each day using backtracking.
-        Returns True if successful, or False if it is impossible given constraints:
-            - Employee availability
-            - Employee maxShift
-            - Cannot assign the same person to the same shift more than once
-            - (Optional) Cannot assign the same person to both day and night on the same day
+        Fills the schedule using an optimized backtracking algorithm that:
+        - Randomizes employee order to yield a new schedule on each run.
+        - Enforces that an employee cannot be assigned to more than one shift per day.
+        - Ensures that each completed shift (day or night) has at least one employee with soup.
+        Returns True if a complete valid schedule is found, otherwise False.
         """
         # --- Upfront Feasibility Check ---
-        # Calculate total required slots for the week.
         total_slots = sum(day_req + night_req for (day_req, night_req) in self.shift_requirements.values())
-        # Calculate the total capacity of all employees.
         total_capacity = sum(emp.maxShift for emp in employees)
         if total_capacity < total_slots:
             print("Overall, there are not enough shifts available among all employees!")
             return False
 
-        # --- Create an Ordered List of Shift Slots ---
+        # --- Create a List of All Shift Slots ---
         days_in_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         all_slots = []
         for day in days_in_order:
@@ -62,68 +59,92 @@ class Schedule:
             all_slots.extend([(day, "day_shift")] * day_req)
             all_slots.extend([(day, "night_shift")] * night_req)
 
-        # --- Track the Remaining Shifts for Each Employee ---
+        # --- Track Remaining Shifts for Each Employee ---
         employee_shifts_left = {emp: emp.maxShift for emp in employees}
+        memo = {}
 
-        # --- Inline can_assign Function ---
         def can_assign(emp, day_name, shift_type) -> bool:
-            # 1) Check that the employee has capacity left.
+            # Check that the employee has remaining capacity.
             if employee_shifts_left[emp] <= 0:
                 return False
-            # 2) Ensure the employee isn't already assigned to this shift.
-            if emp in self.schedule[day_name][shift_type]:
+            # Prevent assigning an employee to more than one shift in the same day.
+            if emp in self.schedule[day_name]["day_shift"] or emp in self.schedule[day_name]["night_shift"]:
                 return False
-            # 3) Check employee availability for the given shift.
+            # Check employee availability.
             day_avail, night_avail = emp.availability[day_name]
             if shift_type == "day_shift" and not day_avail:
                 return False
             if shift_type == "night_shift" and not night_avail:
                 return False
-            # 4) (Optional) Prevent assigning the same employee to both shifts on the same day.
-            if shift_type == "night_shift" and emp in self.schedule[day_name]["day_shift"]:
-                return False
             return True
 
-        # --- Recursive Backtracking Function ---
+        # Randomize employees list for variability.
+        local_employees = employees[:]
+        random.shuffle(local_employees)
+
         def backtrack(i: int) -> bool:
-            global counter
-            counter += 1
-            print("It is still running! -> This many iterations: ", counter)
-            # Prune if the total remaining capacity is less than the slots left.
-            if sum(employee_shifts_left.values()) < (len(all_slots) - i):
+            # Create a key representing the current state for memoization.
+            state_key = (i, tuple(sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left)))
+            if state_key in memo:
                 return False
 
-            # Base case: all slots have been filled.
+            # Prune if remaining capacity is insufficient.
+            if sum(employee_shifts_left.values()) < (len(all_slots) - i):
+                memo[state_key] = False
+                return False
+
+            # Base case: All slots have been assigned.
             if i == len(all_slots):
                 return True
 
+            # --- MRV Heuristic: Select the slot with the fewest candidate employees ---
+            min_options = None
+            min_index = i
+            for j in range(i, len(all_slots)):
+                day_name_j, shift_type_j = all_slots[j]
+                options = [emp for emp in local_employees if can_assign(emp, day_name_j, shift_type_j)]
+                if min_options is None or len(options) < len(min_options):
+                    min_options = options
+                    min_index = j
+                if len(options) == 0:
+                    break  # No valid candidate for this slot; prune immediately.
+
+            # Swap the most constrained slot into the current position.
+            all_slots[i], all_slots[min_index] = all_slots[min_index], all_slots[i]
             day_name, shift_type = all_slots[i]
 
-            # Try assigning each employee to the current slot.
-            for emp in employees:
-                if can_assign(emp, day_name, shift_type):
-                    # Assign the employee.
-                    self.schedule[day_name][shift_type].append(emp)
-                    employee_shifts_left[emp] -= 1
+            # Randomize candidate order for further variability.
+            random.shuffle(min_options)
+            for emp in min_options:
+                self.schedule[day_name][shift_type].append(emp)
+                employee_shifts_left[emp] -= 1
 
-                    # Recurse to fill the next slot.
-                    if backtrack(i + 1):
-                        return True
+                # If the current shift becomes complete, enforce that it has at least one soup.
+                req = self.shift_requirements[day_name][0] if shift_type == "day_shift" else self.shift_requirements[day_name][1]
+                if len(self.schedule[day_name][shift_type]) == req:
+                    if not any(e.getIsSoup() for e in self.schedule[day_name][shift_type]):
+                        self.schedule[day_name][shift_type].pop()
+                        employee_shifts_left[emp] += 1
+                        continue
 
-                    # Backtrack: undo the assignment.
-                    self.schedule[day_name][shift_type].pop()
-                    employee_shifts_left[emp] += 1
+                if backtrack(i + 1):
+                    return True
 
-            # No valid assignment was found for this slot.
+                # Backtrack: Undo the assignment.
+                self.schedule[day_name][shift_type].pop()
+                employee_shifts_left[emp] += 1
+
+            memo[state_key] = False
             return False
 
-        # --- Start the Backtracking Process ---
         success = backtrack(0)
         if success:
             print("Successfully filled all required shifts using backtracking!")
         else:
             print("Could NOT fill all shifts with the given constraints.")
         return success
+
+
     def fillShiftsRandomized(self, employees: list[Person]):
         """
         Randomized algorithm to fill shifts for the week.
