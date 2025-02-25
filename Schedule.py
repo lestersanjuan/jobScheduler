@@ -1,6 +1,6 @@
 from Person import Person
 import random
-global counter
+
 
 counter = 0
 
@@ -46,6 +46,7 @@ class Schedule:
         - Ensures that each completed shift (day or night) has at least one employee with soup.
         Returns True if a complete valid schedule is found, otherwise False.
         """
+
         # --- Upfront Feasibility Check ---
         total_slots = sum(day_req + night_req for (day_req,
                           night_req) in self.shift_requirements.values())
@@ -87,6 +88,7 @@ class Schedule:
         random.shuffle(local_employees)
 
         def backtrack(i: int) -> bool:
+
             # Create a key representing the current state for memoization.
             state_key = (i, tuple(
                 sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left)))
