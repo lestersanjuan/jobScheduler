@@ -1,5 +1,5 @@
 class Person:
-    def __init__(self, name:str, availability: dict(), isSoup: bool, maxShift: int, minShift: int):
+    def __init__(self, name: str, availability: dict(), isSoup: bool, maxShift: int, minShift: int):  # type: ignore
         """
         Important attribute: Availability
         Availability will be made as where {DayOfTheWeek: [day_shift, night_shift]} where day_shift/night_shift = bool
@@ -8,17 +8,26 @@ class Person:
         """
         self.name = name
         self.availability = availability
+
+        for x in self.availability:
+            if self.availability[x] == "O":
+                self.availability = [True, False]
+            elif self.availability[x] == "C":
+                self.availability = [True, False]
+            elif self.availability[x] == "X":
+                self.availability[x] = [False, False]
+
         self.isSoup = isSoup
         self.maxShift = maxShift
         self.minShift = minShift
 
-    def setShiftCount(self, amount:int):
+    def setShiftCount(self, amount: int):
         pass
 
-    def setName(self, name:str):
+    def setName(self, name: str):
         pass
-    
-    def setAvailability(self, availability:dict()):
+
+    def setAvailability(self, availability: dict()):  # type: ignore
         pass
 
     def setIsSoup(self, isSoup: bool):
@@ -32,5 +41,3 @@ class Person:
 
     def getIsSoup(self):
         return self.isSoup
-
-    
