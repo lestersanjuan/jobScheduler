@@ -11,10 +11,10 @@ class Schedule:
         self.mondayCount = (2,4)
         self.tuesdayCount = (2,4)
         self.wednesdayCount = (2,4)
-        self.thursdayCount = (2,4)
+        self.thursdayCount = (2,5)
         self.fridayCount = (4,5)
-        self.saturdayCount = (4,5)
-        self.sundayCount = (4, 4)
+        self.saturdayCount = (4,6)
+        self.sundayCount = (4, 5)
 
         self.schedule = {
                             "Monday": {"day_shift": [], "night_shift": []},
