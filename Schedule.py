@@ -3,39 +3,41 @@ import random
 
 
 counter = 0
+
+
 class Schedule:
     def __init__(self):
         """
         DayOfWeek = (morning shift shift count, night shfit count)
         """
-        self.mondayCount = (2,4)
-        self.tuesdayCount = (2,4)
-        self.wednesdayCount = (2,4)
-        self.thursdayCount = (2,5)
-        self.fridayCount = (4,5)
-        self.saturdayCount = (4,6)
-        self.sundayCount = (4, 5)
+        self.mondayCount = (2, 4)
+        self.tuesdayCount = (2, 4)
+        self.wednesdayCount = (2, 4)
+        self.thursdayCount = (2, 5)
+        self.fridayCount = (4, 5)
+        self.saturdayCount = (4, 5)
+        self.sundayCount = (4, 4)
 
         self.schedule = {
-                            "Monday": {"day_shift": [], "night_shift": []},
-                            "Tuesday": {"day_shift": [], "night_shift": []},
-                            "Wednesday": {"day_shift": [], "night_shift": []},
-                            "Thursday": {"day_shift": [], "night_shift": []},
-                            "Friday": {"day_shift": [], "night_shift": []},
-                            "Saturday": {"day_shift": [], "night_shift": []},
-                            "Sunday": {"day_shift": [], "night_shift": []},
-                        }
-
+            "Monday": {"day_shift": [], "night_shift": []},
+            "Tuesday": {"day_shift": [], "night_shift": []},
+            "Wednesday": {"day_shift": [], "night_shift": []},
+            "Thursday": {"day_shift": [], "night_shift": []},
+            "Friday": {"day_shift": [], "night_shift": []},
+            "Saturday": {"day_shift": [], "night_shift": []},
+            "Sunday": {"day_shift": [], "night_shift": []},
+        }
 
         self.shift_requirements = {
-                "Monday": self.mondayCount,
-                "Tuesday": self.tuesdayCount,
-                "Wednesday": self.wednesdayCount,
-                "Thursday": self.thursdayCount,
-                "Friday": self.fridayCount,
-                "Saturday": self.saturdayCount,
-                "Sunday": self.sundayCount,
-            }
+            "Monday": self.mondayCount,
+            "Tuesday": self.tuesdayCount,
+            "Wednesday": self.wednesdayCount,
+            "Thursday": self.thursdayCount,
+            "Friday": self.fridayCount,
+            "Saturday": self.saturdayCount,
+            "Sunday": self.sundayCount,
+        }
+
     def fillShiftsBacktracking(self, employees: list[Person]) -> bool:
         """
         Fills the schedule using an optimized backtracking algorithm that:
@@ -44,15 +46,18 @@ class Schedule:
         - Ensures that each completed shift (day or night) has at least one employee with soup.
         Returns True if a complete valid schedule is found, otherwise False.
         """
+
         # --- Upfront Feasibility Check ---
-        total_slots = sum(day_req + night_req for (day_req, night_req) in self.shift_requirements.values())
+        total_slots = sum(day_req + night_req for (day_req,
+                          night_req) in self.shift_requirements.values())
         total_capacity = sum(emp.maxShift for emp in employees)
         if total_capacity < total_slots:
             print("Overall, there are not enough shifts available among all employees!")
             return False
 
         # --- Create a List of All Shift Slots ---
-        days_in_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        days_in_order = ["Monday", "Tuesday", "Wednesday",
+                         "Thursday", "Friday", "Saturday", "Sunday"]
         all_slots = []
         for day in days_in_order:
             day_req, night_req = self.shift_requirements[day]
@@ -83,8 +88,10 @@ class Schedule:
         random.shuffle(local_employees)
 
         def backtrack(i: int) -> bool:
+
             # Create a key representing the current state for memoization.
-            state_key = (i, tuple(sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left)))
+            state_key = (i, tuple(
+                sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left)))
             if state_key in memo:
                 return False
 
@@ -102,12 +109,14 @@ class Schedule:
             min_index = i
             for j in range(i, len(all_slots)):
                 day_name_j, shift_type_j = all_slots[j]
-                options = [emp for emp in local_employees if can_assign(emp, day_name_j, shift_type_j)]
+                options = [emp for emp in local_employees if can_assign(
+                    emp, day_name_j, shift_type_j)]
                 if min_options is None or len(options) < len(min_options):
                     min_options = options
                     min_index = j
                 if len(options) == 0:
-                    break  # No valid candidate for this slot; prune immediately.
+                    # No valid candidate for this slot; prune immediately.
+                    break
 
             # Swap the most constrained slot into the current position.
             all_slots[i], all_slots[min_index] = all_slots[min_index], all_slots[i]
@@ -144,7 +153,6 @@ class Schedule:
             print("Could NOT fill all shifts with the given constraints.")
         return success
 
-
     def fillShiftsRandomized(self, employees: list[Person]):
         """
         Randomized algorithm to fill shifts for the week.
@@ -154,7 +162,8 @@ class Schedule:
         - Ensures shifts are filled up to the required number of employees (but might not fill all).
         """
         # Track remaining shifts for each employee
-        employee_shift_counts = {employee: employee.maxShift for employee in employees}
+        employee_shift_counts = {
+            employee: employee.maxShift for employee in employees}
 
         for day, shifts in self.schedule.items():
             day_required, night_required = self.shift_requirements[day]
@@ -167,7 +176,8 @@ class Schedule:
             for employee in available_employees:
                 if len(shifts["day_shift"]) < day_required:
                     if (
-                        employee.availability[day][0]  # available for day shift
+                        # available for day shift
+                        employee.availability[day][0]
                         and employee_shift_counts[employee] > 0
                     ):
                         shifts["day_shift"].append(employee)
@@ -178,7 +188,8 @@ class Schedule:
             for employee in available_employees:
                 if len(shifts["night_shift"]) < night_required:
                     if (
-                        employee.availability[day][1]  # available for night shift
+                        # available for night shift
+                        employee.availability[day][1]
                         and employee_shift_counts[employee] > 0
                         and employee not in shifts["day_shift"]
                     ):
@@ -190,6 +201,7 @@ class Schedule:
                 print(f"WARNING: Not enough employees for {day} day shift.")
             if len(shifts["night_shift"]) < night_required:
                 print(f"WARNING: Not enough employees for {day} night shift.")
+
     def fillShiftsRandomized(self, employees: list[Person]):
         """
         Randomized algorithm to fill shifts for the week.
@@ -199,7 +211,8 @@ class Schedule:
         - Ensures shifts are filled up to the required number of employees.
         """
         # Track remaining shifts for each employee
-        employee_shift_counts = {employee: employee.maxShift for employee in employees}
+        employee_shift_counts = {
+            employee: employee.maxShift for employee in employees}
 
         for day, shifts in self.schedule.items():
             day_required, night_required = self.shift_requirements[day]
@@ -210,10 +223,13 @@ class Schedule:
             # Fill day_shift
             random.shuffle(available_employees)
             for employee in available_employees:
-                if len(shifts["day_shift"]) < day_required:  # Check if we need more for the day shift
+                # Check if we need more for the day shift
+                if len(shifts["day_shift"]) < day_required:
                     if (
-                        employee.availability[day][0]  # Check if available for day_shift
-                        and employee_shift_counts[employee] > 0  # Ensure they have shifts left
+                        # Check if available for day_shift
+                        employee.availability[day][0]
+                        # Ensure they have shifts left
+                        and employee_shift_counts[employee] > 0
                     ):
                         shifts["day_shift"].append(employee)
                         employee_shift_counts[employee] -= 1
@@ -221,11 +237,15 @@ class Schedule:
             # Shuffle again for night shift
             random.shuffle(available_employees)
             for employee in available_employees:
-                if len(shifts["night_shift"]) < night_required:  # Check if we need more for the night shift
+                # Check if we need more for the night shift
+                if len(shifts["night_shift"]) < night_required:
                     if (
-                        employee.availability[day][1]  # Check if available for night_shift
-                        and employee_shift_counts[employee] > 0  # Ensure they have shifts left
-                        and employee not in shifts["day_shift"]  # Ensure they are not already in day_shift
+                        # Check if available for night_shift
+                        employee.availability[day][1]
+                        # Ensure they have shifts left
+                        and employee_shift_counts[employee] > 0
+                        # Ensure they are not already in day_shift
+                        and employee not in shifts["day_shift"]
                     ):
                         shifts["night_shift"].append(employee)
                         employee_shift_counts[employee] -= 1
@@ -245,18 +265,20 @@ class Schedule:
         - Ensures shifts are filled up to the required number of employees.
         """
 
-        
         for day, shifts in self.schedule.items():
             day_required, night_required = self.shift_requirements[day]
 
             # Sort employees by maxShift (prioritize employees with higher maxShift)
-            employees_sorted = sorted(employees, key=lambda e: e.maxShift, reverse=True)
-            
+            employees_sorted = sorted(
+                employees, key=lambda e: e.maxShift, reverse=True)
+
             # Fill day_shift
             for employee in employees_sorted:
-                if len(shifts["day_shift"]) < day_required:  # Check if we need more for the day shift
+                # Check if we need more for the day shift
+                if len(shifts["day_shift"]) < day_required:
                     if (
-                        employee.availability[day][0]  # Check if available for day_shift
+                        # Check if available for day_shift
+                        employee.availability[day][0]
                         and employee.maxShift > 0     # Ensure they have shifts left
                     ):
                         shifts["day_shift"].append(employee)
@@ -264,9 +286,11 @@ class Schedule:
 
             # Fill night_shift
             for employee in employees_sorted:
-                if len(shifts["night_shift"]) < night_required:  # Check if we need more for the night shift
+                # Check if we need more for the night shift
+                if len(shifts["night_shift"]) < night_required:
                     if (
-                        employee.availability[day][1]  # Check if available for night_shift
+                        # Check if available for night_shift
+                        employee.availability[day][1]
                         and employee.maxShift > 0     # Ensure they have shifts left
                         and employee not in shifts["day_shift"]
                     ):
@@ -278,15 +302,15 @@ class Schedule:
                 print(f"WARNING: Not enough employees for {day} day shift.")
             if len(shifts["night_shift"]) < night_required:
                 print(f"WARNING: Not enough employees for {day} night shift.")
-    
 
-    def doesShiftHaveSoup(self, day): 
+    def doesShiftHaveSoup(self, day):
         """Checks if any employee scheduled on the given day has soup."""
         for shift in self.schedule[day]:  # shift is either "day_shift" or "night_shift"
             for emp in self.schedule[day][shift]:
                 if emp.getIsSoup():
                     return True
         return False
+
     def __repr__(self):
         """
         Represent the schedule as a table-like structure.
@@ -305,9 +329,5 @@ class Schedule:
         # Combine header and rows
         return header + "\n".join(rows)
 
-
     def getShift(self, shift: str):
         pass
-        
-
-
