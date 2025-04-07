@@ -67,16 +67,16 @@ if __name__ == "__main__":
         Person(
             name="Dan",
             availability={
-                "Monday": [False, True],
+                "Monday": [False, False], #UNAVAILABLE
                 "Tuesday": [False, False],
-                "Wednesday": [False, True],
+                "Wednesday": [False, False],#UNAVAILABLE
                 "Thursday": [False, True],
-                "Friday": [False, True],
-                "Saturday": [False, True],
+                "Friday": [False, False],
+                "Saturday": [False, False],#UNAVAILABLE
                 "Sunday": [False, False],
             },
             isSoup=True,
-            maxShift=3,
+            maxShift=1,
             minShift=1,
         ),
         Person(
@@ -115,9 +115,9 @@ if __name__ == "__main__":
                 "Monday": [False, True],
                 "Tuesday": [True, True],
                 "Wednesday": [False, True],
-                "Thursday": [True, True],
+                "Thursday": [True, False], #UNAVAILABLE ON NIGHT
                 "Friday": [True, False],
-                "Saturday": [False, False],  # UNAVAILABLE
+                "Saturday": [True, True],
                 "Sunday": [False, True],
             },
             isSoup=False,
@@ -146,7 +146,7 @@ if __name__ == "__main__":
                 "Tuesday": [False, True],
                 "Wednesday": [False, False],
                 "Thursday": [False, True],
-                "Friday": [False, False],
+                "Friday": [False, False], #UNAVAILABLE
                 "Saturday": [False, False],
                 "Sunday": [False, False],
             },
@@ -176,9 +176,9 @@ if __name__ == "__main__":
                 "Tuesday": [True, True],
                 "Wednesday": [True, True],
                 "Thursday": [True, True],
-                "Friday": [False, False],
-                "Saturday": [True, False],
-                "Sunday": [True, True],
+                "Friday": [False, False], #UNAVAILABLE
+                "Saturday": [False, False], #UNAVAILABLE
+                "Sunday": [False, True], #UNAVAILABLE
             },
             isSoup=False,
             maxShift=4,
@@ -296,7 +296,7 @@ if __name__ == "__main__":
                 "Tuesday": [False, True],
                 "Wednesday": [False, True],
                 "Thursday": [False, False],
-                "Friday": [True, False],
+                "Friday": [False, False], #UNAVAILABLE
                 "Saturday": [True, True],
                 "Sunday": [False, False],
             },
