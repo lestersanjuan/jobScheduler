@@ -353,6 +353,8 @@ if __name__ == "__main__":
     ]
 
     # Create a schedule and populate it
+    for employee in employees:
+        print(f"{employee.name}: {type(employee.availability['Monday'])}")
     schedule = Schedule()
     schedule.fillShiftsBacktracking(employees)
     # Print the filled schedule

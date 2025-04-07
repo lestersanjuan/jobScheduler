@@ -8,15 +8,7 @@ class Person:
         """
         self.name = name
         self.availability = availability
-
-        for x in self.availability:
-            if self.availability[x] == "O":
-                self.availability = [True, False]
-            elif self.availability[x] == "C":
-                self.availability = [True, False]
-            elif self.availability[x] == "X":
-                self.availability[x] = [False, False]
-
+        self.setAvailability()
         self.isSoup = isSoup
         self.maxShift = maxShift
         self.minShift = minShift
@@ -27,8 +19,14 @@ class Person:
     def setName(self, name: str):
         pass
 
-    def setAvailability(self, availability: dict()):  # type: ignore
-        pass
+    def setAvailability(self):
+        for x in self.availability:
+            if self.availability[x] == "O":
+                self.availability[x] = [True, False]
+            elif self.availability[x] == "C":
+                self.availability[x] = [False, True]
+            elif self.availability[x] == "X":
+                self.availability[x] = [False, False]
 
     def setIsSoup(self, isSoup: bool):
         self.isSoup = isSoup
