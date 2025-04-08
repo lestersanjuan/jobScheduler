@@ -121,7 +121,7 @@ class Schedule:
             # Swap the most constrained slot into the current position.
             all_slots[i], all_slots[min_index] = all_slots[min_index], all_slots[i]
             day_name, shift_type = all_slots[i]
-x
+
             # Randomize candidate order for further variability.
             random.shuffle(min_options)
             for emp in min_options:
