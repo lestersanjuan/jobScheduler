@@ -15,8 +15,8 @@ class Schedule:
         self.wednesdayCount = (2, 4)
         self.thursdayCount = (2, 5)
         self.fridayCount = (4, 5)
-        self.saturdayCount = (4, 5)
-        self.sundayCount = (4, 4)
+        self.saturdayCount = (4, 6)
+        self.sundayCount = (4, 5)
 
         self.schedule = {
             "Monday": {"day_shift": [], "night_shift": []},
@@ -43,13 +43,13 @@ class Schedule:
         Fills the schedule using an optimized backtracking algorithm that:
         - Randomizes employee order to yield a new schedule on each run.
         - Enforces that an employee cannot be assigned to more than one shift per day.
-        - Ensures that each completed shift (day or night) has at least one employee with soup.
+        - Ensures each completed shift has at least one employee with soup.
         Returns True if a complete valid schedule is found, otherwise False.
         """
 
         # --- Upfront Feasibility Check ---
-        total_slots = sum(day_req + night_req for (day_req,
-                          night_req) in self.shift_requirements.values())
+        total_slots = sum(day_req + night_req for (day_req, night_req)
+                          in self.shift_requirements.values())
         total_capacity = sum(emp.maxShift for emp in employees)
         if total_capacity < total_slots:
             print("Overall, there are not enough shifts available among all employees!")
@@ -66,6 +66,8 @@ class Schedule:
 
         # --- Track Remaining Shifts for Each Employee ---
         employee_shifts_left = {emp: emp.maxShift for emp in employees}
+
+        # Used to cache states we've seen: maps state -> bool (True=success, False=failure)
         memo = {}
 
         def can_assign(emp, day_name, shift_type) -> bool:
@@ -88,21 +90,26 @@ class Schedule:
         random.shuffle(local_employees)
 
         def backtrack(i: int) -> bool:
+            # If we've assigned everyone successfully, return True.
+            if i == len(all_slots):
+                return True
 
             # Create a key representing the current state for memoization.
-            state_key = (i, tuple(
-                sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left)))
+            # (We sort by id(emp) to avoid "random" dictionary order issues.)
+            state_key = (
+                i,
+                tuple(
+                    sorted((id(emp), employee_shifts_left[emp]) for emp in employee_shifts_left))
+            )
+
+            # If we've already explored this state, return its result.
             if state_key in memo:
-                return False
+                return memo[state_key]
 
             # Prune if remaining capacity is insufficient.
             if sum(employee_shifts_left.values()) < (len(all_slots) - i):
                 memo[state_key] = False
                 return False
-
-            # Base case: All slots have been assigned.
-            if i == len(all_slots):
-                return True
 
             # --- MRV Heuristic: Select the slot with the fewest candidate employees ---
             min_options = None
@@ -111,46 +118,56 @@ class Schedule:
                 day_name_j, shift_type_j = all_slots[j]
                 options = [emp for emp in local_employees if can_assign(
                     emp, day_name_j, shift_type_j)]
+                # Update our best slot if we find a slot with fewer valid employees
                 if min_options is None or len(options) < len(min_options):
                     min_options = options
                     min_index = j
+                # If zero candidates for this slot, we can fail immediately
                 if len(options) == 0:
-                    # No valid candidate for this slot; prune immediately.
-                    break
+                    memo[state_key] = False
+                    return False
 
-            # Swap the most constrained slot into the current position.
+            # Swap the most constrained slot into the current position i
             all_slots[i], all_slots[min_index] = all_slots[min_index], all_slots[i]
             day_name, shift_type = all_slots[i]
 
             # Randomize candidate order for further variability.
             random.shuffle(min_options)
             for emp in min_options:
+                # Assign this employee to the current slot
                 self.schedule[day_name][shift_type].append(emp)
                 employee_shifts_left[emp] -= 1
 
-                # If the current shift becomes complete, enforce that it has at least one soup.
-                req = self.shift_requirements[day_name][0] if shift_type == "day_shift" else self.shift_requirements[day_name][1]
-                if len(self.schedule[day_name][shift_type]) == req:
+                # If this slot (day/night) is now fully assigned, check for at least one soup
+                req_needed = self.shift_requirements[day_name][
+                    0] if shift_type == "day_shift" else self.shift_requirements[day_name][1]
+                if len(self.schedule[day_name][shift_type]) == req_needed:
+                    # If no soup in this group, revert and continue
                     if not any(e.getIsSoup() for e in self.schedule[day_name][shift_type]):
                         self.schedule[day_name][shift_type].pop()
                         employee_shifts_left[emp] += 1
                         continue
 
+                # Recur for the next slot
                 if backtrack(i + 1):
+                    memo[state_key] = True
                     return True
 
-                # Backtrack: Undo the assignment.
+                # Backtrack / Undo the assignment
                 self.schedule[day_name][shift_type].pop()
                 employee_shifts_left[emp] += 1
 
+            # If no candidate led to a solution, record failure for this state
             memo[state_key] = False
             return False
 
+        # Run backtracking
         success = backtrack(0)
         if success:
             print("Successfully filled all required shifts using backtracking!")
         else:
             print("Could NOT fill all shifts with the given constraints.")
+
         return success
 
     def fillShiftsRandomized(self, employees: list[Person]):
